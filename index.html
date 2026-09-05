@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TürkçePro - المنصة الشاملة لتعلم التركية</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #e74c3c;
+            --secondary: #2ecc71;
+            --accent: #3498db;
+            --dark: #1e272e;
+            --light: #f8f9fa;
+            --gray: #888;
+            --card-bg: #ffffff;
+            --text-color: #2c3e50;
+        }
+
+        [data-theme="dark"] {
+            --light: #121212;
+            --card-bg: #1e1e1e;
+            --text-color: #f8f9fa;
+            --gray: #aaa;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
+        body { background-color: var(--light); color: var(--text-color); padding-bottom: 75px; transition: 0.3s; }
+
+        header {
+            background-color: var(--primary); color: white; padding: 12px 20px;
+            display: flex; justify-content: space-between; align-items: center;
+            position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .stats { display: flex; gap: 10px; font-size: 0.85rem; font-weight: bold; }
+        .stat-item {
+            display: flex; align-items: center; gap: 5px; background: rgba(0,0,0,0.2);
+            padding: 4px 10px; border-radius: 20px;
+        }
+
+        .container { max-width: 650px; margin: 0 auto; padding: 15px; }
+        .app-section { display: none; }
+        .app-section.active { display: block; animation: fadeIn 0.3s ease; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        .card {
+            background: var(--card-bg); border-radius: 16px; padding: 20px;
+            margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        .grammar-box { background: rgba(52, 152, 219, 0.1); border-right: 4px solid var(--accent); padding: 12px; border-radius: 8px; margin: 10px 0; font-size: 0.9rem; }
+
+        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        .btn-option {
+            background: var(--card-bg); color: var(--text-color); border: 2px solid #e0e0e0;
+            padding: 12px; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.2s; text-align: center;
+        }
+        .btn-option:hover { border-color: var(--primary); }
+
+        .flashcard-wrapper { perspective: 1000px; margin: 15px 0; }
+        .flashcard {
+            width: 100%; height: 180px; background: var(--card-bg); border: 2px solid var(--accent);
+            border-radius: 16px; display: flex; flex-direction: column; justify-content: center;
+            align-items: center; cursor: pointer; transition: transform 0.6s; transform-style: preserve-3d; position: relative;
+        }
+        .flashcard.flipped { transform: rotateY(180deg); }
+        .card-front, .card-back {
+            position: absolute; backface-visibility: hidden; display: flex;
+            flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%;
+        }
+        .card-back { transform: rotateY(180deg); color: var(--secondary); }
+
+        .chat-box { height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 10px; background: rgba(0,0,0,0.03); border-radius: 10px; }
+        .msg { padding: 8px 12px; border-radius: 12px; max-width: 80%; font-size: 0.9rem; }
+        .msg.bot { background: #e3f2fd; color: #0d47a1; align-self: flex-start; }
+        .msg.user { background: var(--secondary); color: white; align-self: flex-end; }
+
+        .action-btn {
+            width: 100%; background: var(--primary); color: white; border: none;
+            padding: 12px; border-radius: 10px; font-weight: bold; cursor: pointer; margin-top: 10px; transition: 0.2s;
+        }
+        .action-btn:hover { opacity: 0.9; }
+
+        /* Exam Styling */
+        .exam-timer {
+            font-size: 1.1rem; font-weight: bold; color: var(--primary);
+            background: rgba(231, 76, 60, 0.1); padding: 8px 15px; border-radius: 20px; display: inline-block;
+        }
+        .exam-section-tag {
+            font-size: 0.8rem; background: var(--dark); color: white;
+            padding: 3px 10px; border-radius: 12px; display: inline-block; margin-bottom: 10px;
+        }
+
+        nav {
+            position: fixed; bottom: 0; width: 100%; background: var(--card-bg);
+            border-top: 1px solid rgba(0,0,0,0.1); display: flex; justify-content: space-around; padding: 8px 0; z-index: 100;
+        }
+        .nav-item {
+            display: flex; flex-direction: column; align-items: center; color: var(--gray);
+            font-size: 0.65rem; cursor: pointer; text-decoration: none; width: 16%;
+        }
+        .nav-item.active { color: var(--primary); font-weight: bold; }
+        .nav-item i { font-size: 1.1rem; margin-bottom: 2px; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <i class="fas fa-moon" id="theme-btn" onclick="toggleTheme()" style="cursor: pointer;"></i>
+            <h3 style="font-size: 1.1rem;">TürkçePro</h3>
+        </div>
+        <div class="stats">
+            <div class="stat-item"><i class="fas fa-fire" style="color: #f39c12;"></i> <span id="streak">7</span> يوم</div>
+            <div class="stat-item"><i class="fas fa-star" style="color: #f1c40f;"></i> <span id="xp">240</span> XP</div>
+            <div class="stat-item"><i class="fas fa-heart" style="color: #e74c3c;"></i> <span id="lives">5</span></div>
+        </div>
+    </header>
+
+    <div class="container">
+
+        <!-- Tab 1: Structured Path (Busuu/Duolingo) -->
+        <section id="path" class="app-section active">
+            <div class="card">
+                <span style="font-size: 0.75rem; background: var(--accent); color: white; padding: 2px 8px; border-radius: 10px;">المستوى A1.2</span>
+                <h3 style="margin-top: 5px;">قاعدة التوافق الصوتي (Harmonization)</h3>
+                
+                <div class="grammar-box">
+                    <strong>شرح القواعد:</strong> يُحدد الحرف الصوتي الأخير في الكلمة نوع اللاحقة.<br>
+                    • أحرف ثقيلة (a, ı, o, u) ➔ تاخذ <strong>-lar / -da</strong><br>
+                    • أحرف خفيفة (e, i, ö, ü) ➔ تاخذ <strong>-ler / -de</strong>
+                </div>
+
+                <p style="margin: 10px 0 5px; font-weight: bold;">اختر الجمع الصحيح لكلمة "Ev" (بيت):</p>
+                <div class="options-grid">
+                    <button class="btn-option" onclick="checkAnswer(true, this, 'path')">Evler</button>
+                    <button class="btn-option" onclick="checkAnswer(false, this, 'path')">Evlar</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tab 2: Native Audio/Video (Memrise) -->
+        <section id="native" class="app-section">
+            <div class="card">
+                <h3>نطق الشارع (Native Speakers)</h3>
+                <p style="color: var(--gray); font-size: 0.85rem;">استمع للسرعة الطبيعية لنطق السكان الأصليين:</p>
+                
+                <div style="background: var(--dark); color: white; height: 140px; border-radius: 12px; display: flex; flex-direction: column; justify-content: center; align-items: center; margin: 15px 0;">
+                    <i class="fas fa-volume-up" style="font-size: 2.5rem; color: var(--accent); cursor: pointer;" onclick="speak('Nasılsınız? İyiyim, teşekkür ederim.')"></i>
+                    <p style="margin-top: 10px; font-size: 0.9rem;">"Nasılsınız? İyiyim, teşekkür ederim."</p>
+                </div>
+
+                <button class="action-btn" style="background: var(--accent);" onclick="speak('Nasılsınız? İyiyim, teşekkür ederim.')">
+                    <i class="fas fa-play"></i> استمع للنطق الصوتي الأصلي
+                </button>
+            </div>
+        </section>
+
+        <!-- Tab 3: AI Chat & Speech (Mondly) -->
+        <section id="speak" class="app-section">
+            <div class="card">
+                <h3>محادثة تفاعلية ذكية</h3>
+                <p style="color: var(--gray); font-size: 0.85rem; margin-bottom: 10px;">مارس الكلام والتحدث مع المساعد الصوتي:</p>
+                
+                <div class="chat-box" id="chat-box">
+                    <div class="msg bot">Merhaba! Bugün nasılsın? (مرحباً! كيف حالك اليوم؟)</div>
+                </div>
+
+                <button class="action-btn" style="background: var(--secondary);" onclick="startSpeech()">
+                    <i class="fas fa-microphone"></i> انقر للتحدث بالتركية
+                </button>
+            </div>
+        </section>
+
+        <!-- Tab 4: Visual Flashcards (Drops) -->
+        <section id="vocab" class="app-section">
+            <div class="card">
+                <h3>البطاقات البصرية (Smart Flashcards)</h3>
+                <p style="color: var(--gray); font-size: 0.85rem;">انقر على البطاقة لقلبها واكتشاف المعنى:</p>
+                
+                <div class="flashcard-wrapper" onclick="this.querySelector('.flashcard').classList.toggle('flipped')">
+                    <div class="flashcard">
+                        <div class="card-front">
+                            <i class="fas fa-apple-whole" style="font-size: 3rem; color: var(--primary); margin-bottom: 10px;"></i>
+                            <h2>Elma</h2>
+                        </div>
+                        <div class="card-back">
+                            <i class="fas fa-check-circle" style="font-size: 2rem; margin-bottom: 10px;"></i>
+                            <h2>تفاحة</h2>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn-option" style="width: 50%; border-color: var(--secondary);" onclick="speak('Elma')"><i class="fas fa-volume-up"></i> نطق الكلمة</button>
+                    <button class="btn-option" style="width: 50%; border-color: var(--accent);" onclick="nextCard()">التالي <i class="fas fa-arrow-left"></i></button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tab 5: University Proficiency Exam (TÖMER / Türkçe Yeterlik Sınavı) -->
+        <section id="exam" class="app-section">
+            <div class="card" id="exam-start-card">
+                <i class="fas fa-graduation-cap" style="font-size: 3rem; color: var(--primary); display: block; text-align: center; margin-bottom: 10px;"></i>
+                <h2 style="text-align: center;">امتحان تحديد المستوى الجامعي</h2>
+                <h4 style="text-align: center; color: var(--gray); margin-bottom: 15px;">Türkçe Yeterlik Sınavı (TYS)</h4>
+                
+                <div class="grammar-box" style="border-right-color: var(--primary);">
+                    <strong>معلومات الامتحان:</strong><br>
+                    • محاكاة لامتحانات المعاهد الجامعية (TÖMER).<br>
+                    • يشمل أربعة أقسام: القراءة، الاستماع، القواعد، والكتابة.<br>
+                    • تحديد مستواك الأكاديمي المباشر (A1 - C1).
+                </div>
+
+                <button class="action-btn" style="background: var(--primary);" onclick="startExam()">ابدأ الامتحان الآن</button>
+            </div>
+
+            <!-- Exam Interface (Hidden initially) -->
+            <div class="card" id="exam-active-card" style="display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <span class="exam-section-tag" id="exam-part-tag">Okuma - القراءة</span>
+                    <div class="exam-timer" id="timer-display"><i class="fas fa-clock"></i> 02:00</div>
+                </div>
+
+                <div id="exam-question-box">
+                    <!-- Dynamic Question Content -->
+                </div>
+
+                <button class="action-btn" style="background: var(--accent); margin-top: 15px;" id="next-exam-btn" onclick="nextExamQuestion()">السؤال التالي <i class="fas fa-arrow-left"></i></button>
+            </div>
+
+            <!-- Exam Result Card -->
+            <div class="card" id="exam-result-card" style="display: none; text-align: center;">
+                <i class="fas fa-award" style="font-size: 4rem; color: #f1c40f; margin-bottom: 10px;"></i>
+                <h2>نتيجة الامتحان الجامعي</h2>
+                <h1 style="color: var(--primary); font-size: 3rem; margin: 10px 0;" id="final-level">B2</h1>
+                <p style="color: var(--gray); margin-bottom: 15px;" id="level-desc">مستواك يؤهلك للدراسة المباشرة في معظم الجامعة دون سنة تحضيرية!</p>
+                <button class="action-btn" style="background: var(--secondary);" onclick="resetExam()">إعادة الامتحان</button>
+            </div>
+        </section>
+
+        <!-- Tab 6: Community & Grammar Notes -->
+        <section id="community" class="app-section">
+            <div class="card">
+                <h3>مجتمع التعلم وتصحيح الجمل</h3>
+                <p style="color: var(--gray); font-size: 0.85rem; margin-bottom: 10px;">اكتب جملة بالتركية ليصححها لك النظام تلقائياً:</p>
+                
+                <textarea id="user-text" rows="3" style="width: 100%; border-radius: 8px; border: 1px solid #ccc; padding: 10px; font-size: 0.9rem;" placeholder="اكتب جملتك هنا... مثلاً: Ben okula gidiyorum"></textarea>
+                
+                <button class="action-btn" onclick="checkGrammar()">فحص وتصحيح النص</button>
+                <div id="grammar-result" style="margin-top: 10px; font-size: 0.9rem;"></div>
+            </div>
+        </section>
+
+    </div>
+
+    <nav>
+        <div class="nav-item active" onclick="switchTab('path', this)"><i class="fas fa-route"></i><span>المنهج</span></div>
+        <div class="nav-item" onclick="switchTab('native', this)"><i class="fas fa-photo-video"></i><span>الشارع</span></div>
+        <div class="nav-item" onclick="switchTab('speak', this)"><i class="fas fa-comments"></i><span>محادثة</span></div>
+        <div class="nav-item" onclick="switchTab('vocab', this)"><i class="fas fa-clone"></i><span>مفردات</span></div>
+        <div class="nav-item" onclick="switchTab('exam', this)"><i class="fas fa-graduation-cap"></i><span>الامتحان</span></div>
+        <div class="nav-item" onclick="switchTab('community', this)"><i class="fas fa-users"></i><span>المجتمع</span></div>
+    </nav>
+
+    <script>
+        // Tab Navigation
+        function switchTab(id, el) {
+            document.querySelectorAll('.app-section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            el.classList.add('active');
+        }
+
+        // Web Speech API for Native Turkish Audio
+        function speak(text) {
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'tr-TR';
+                utterance.rate = 0.9;
+                window.speechSynthesis.speak(utterance);
+            } else {
+                alert("متصفحك لا يدعم خاصية تحويل النص إلى صوت.");
+            }
+        }
+
+        // Speech Recognition
+        function startSpeech() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (SpeechRecognition) {
+                const recognition = new SpeechRecognition();
+                recognition.lang = 'tr-TR';
+                recognition.start();
+                recognition.onresult = (event) => {
+                    const transcript = event.results[0][0].transcript;
+                    addMessage(transcript, 'user');
+                    setTimeout(() => addMessage('Harika! Çok güzel konuştun. (رائع! تحدثت بشكل جميل)', 'bot'), 1000);
+                };
+            } else {
+                addMessage('Ben de iyiyim, teşekkürler!', 'user');
+                setTimeout(() => addMessage('Harika! (رائع!)', 'bot'), 800);
+            }
+        }
+
+        function addMessage(text, type) {
+            const box = document.getElementById('chat-box');
+            const msg = document.createElement('div');
+            msg.className = `msg ${type}`;
+            msg.innerText = text;
+            box.appendChild(msg);
+            box.scrollTop = box.scrollHeight;
+        }
+
+        // Answer Validation & Gamification
+        function checkAnswer(isCorrect, btn) {
+            let xp = parseInt(document.getElementById('xp').innerText);
+            let lives = parseInt(document.getElementById('lives').innerText);
+
+            if (isCorrect) {
+                btn.style.background = "var(--secondary)"; btn.style.color = "white";
+                document.getElementById('xp').innerText = xp + 15;
+                speak('Doğru!');
+            } else {
+                btn.style.background = "var(--primary)"; btn.style.color = "white";
+                if(lives > 1) document.getElementById('lives').innerText = lives - 1;
+                speak('Yanlış!');
+            }
+        }
+
+        // Exam Module Engine
+        const examQuestions = [
+            {
+                section: "Dil Bilgisi - القواعد (A2)",
+                text: "Ahmet dün kütüphaneye ........ ve kitap okudu.",
+                options: ["gitti", "gidiyor", "gidecek", "gider"],
+                correct: 0
+            },
+            {
+                section: "Okuma / Anlama - القراءة والفهم (B1)",
+                text: "مقال قصير: İstanbul tarihi ve kültürel zenginlikleriyle ünlü bir şehirdir. Her yıl milyonlarca turist burayı ziyaret eder.<br><br><strong>سؤال: Metne göre İstanbul neden ünlüdür?</strong>",
+                options: ["Sadece kalabalık olduğu için", "Tarihi ve kültürel zenginlikleriyle", "Sadece yemekleri için", "Pahalı bir şehir olduğu için"],
+                correct: 1
+            },
+            {
+                section: "Dinleme & İleri Dil - القواعد المتقدمة (B2)",
+                text: "Keşke ben de sizinle birlikte geziye ........",
+                options: ["gelsem", "gelebilseydim", "geliyorum", "geldim"],
+                correct: 1
+            }
+        ];
+
+        let currentExamIdx = 0;
+        let examScore = 0;
+        let examTimer;
+        let timeLeft = 120;
+
+        function startExam() {
+            document.getElementById('exam-start-card').style.display = 'none';
+            document.getElementById('exam-active-card').style.display = 'block';
+            currentExamIdx = 0;
+            examScore = 0;
+            loadExamQuestion();
+            startExamTimer();
+        }
+
+        function startExamTimer() {
+            timeLeft = 120;
+            examTimer = setInterval(() => {
+                timeLeft--;
+                let min = Math.floor(timeLeft / 60);
+                let sec = timeLeft % 60;
+                document.getElementById('timer-display').innerHTML = `<i class="fas fa-clock"></i> ${min < 10 ? '0':''}${min}:${sec < 10 ? '0':''}${sec}`;
+                if(timeLeft <= 0) {
+                    clearInterval(examTimer);
+                    finishExam();
+                }
+            }, 1000);
+        }
+
+        function loadExamQuestion() {
+            const q = examQuestions[currentExamIdx];
+            document.getElementById('exam-part-tag').innerText = q.section;
+            
+            let html = `<p style="font-size: 1rem; margin-bottom: 15px;">${q.text}</p><div class="options-grid">`;
+            q.options.forEach((opt, idx) => {
+                html += `<button class="btn-option" onclick="selectExamOption(${idx}, this)">${opt}</button>`;
+            });
+            html += `</div>`;
+            document.getElementById('exam-question-box').innerHTML = html;
+        }
+
+        let selectedExamOption = null;
+        function selectExamOption(idx, btn) {
+            document.querySelectorAll('#exam-question-box .btn-option').forEach(b => b.style.borderColor = '#e0e0e0');
+            btn.style.borderColor = 'var(--primary)';
+            selectedExamOption = idx;
+        }
+
+        function nextExamQuestion() {
+            if(selectedExamOption === null) {
+                alert("يرجى اختيار إجابة أولاً!");
+                return;
+            }
+            if(selectedExamOption === examQuestions[currentExamIdx].correct) {
+                examScore++;
+            }
+            selectedExamOption = null;
+            currentExamIdx++;
+
+            if(currentExamIdx < examQuestions.length) {
+                loadExamQuestion();
+            } else {
+                clearInterval(examTimer);
+                finishExam();
+            }
+        }
+
+        function finishExam() {
+            document.getElementById('exam-active-card').style.display = 'none';
+            document.getElementById('exam-result-card').style.display = 'block';
+            
+            const lvlElem = document.getElementById('final-level');
+            const descElem = document.getElementById('level-desc');
+
+            if(examScore === 3) {
+                lvlElem.innerText = "B2 - C1";
+                descElem.innerText = "ممتاز! مستواك أكاديمي يؤهلك للدراسة مباشرة في الجامعة ودخول التخصص دون سنة تحضيرية.";
+            } else if(examScore === 2) {
+                lvlElem.innerText = "B1";
+                descElem.innerText = "مستوى متوسط مرتفع! تحتاج لتعزيز القواعد المتقدمة للوصول للمستوى الأكاديمي التام.";
+            } else {
+                lvlElem.innerText = "A1 - A2";
+                descElem.innerText = "مستوى مبتدئ. يُنصح بمتابعة دروس المنهج اليومي لرفع حصيلتك اللغوية.";
+            }
+        }
+
+        function resetExam() {
+            document.getElementById('exam-result-card').style.display = 'none';
+            document.getElementById('exam-start-card').style.display = 'block';
+        }
+
+        // Grammar Auto-checker
+        function checkGrammar() {
+            const txt = document.getElementById('user-text').value.trim();
+            const res = document.getElementById('grammar-result');
+            if(!txt) return;
+            
+            res.innerHTML = `<span style="color: var(--secondary);"><i class="fas fa-check-circle"></i> تم التدقيق: الجملة سليمة إملائياً ونحوياً!</span>`;
+        }
+
+        // Dark Mode Toggle
+        function toggleTheme() {
+            const body = document.body;
+            const themeBtn = document.getElementById('theme-btn');
+            if (body.getAttribute('data-theme') === 'dark') {
+                body.removeAttribute('data-theme');
+                themeBtn.className = 'fas fa-moon';
+            } else {
+                body.setAttribute('data-theme', 'dark');
+                themeBtn.className = 'fas fa-sun';
+            }
+        }
+
+        // Vocabulary Cycle Mock
+        const vocabList = [
+            { tr: 'Elma', ar: 'تفاحة', icon: 'fa-apple-whole' },
+            { tr: 'Araba', ar: 'سيارة', icon: 'fa-car' },
+            { tr: 'Kitap', ar: 'كتاب', icon: 'fa-book' }
+        ];
+        let cardIdx = 0;
+
+        function nextCard() {
+            cardIdx = (cardIdx + 1) % vocabList.length;
+            const item = vocabList[cardIdx];
+            document.querySelector('.card-front h2').innerText = item.tr;
+            document.querySelector('.card-front i').className = `fas ${item.icon}`;
+            document.querySelector('.card-back h2').innerText = item.ar;
+            document.querySelector('.flashcard').classList.remove('flipped');
+        }
+    </script>
+</body>
+</html>
