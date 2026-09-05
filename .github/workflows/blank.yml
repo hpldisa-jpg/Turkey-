@@ -1,0 +1,59 @@
+# This is a basic workflow to help you get started with Actions
+
+name: Build Android APK
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. جلب كود المستودع
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # 2. إعداد بيئة Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # 3. إعداد بيئة Java JDK لبناء تطبيق أندرويد
+      - name: Setup Java JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      # 4. إنتاج ملفات التهيئة وتثبيت أدوات Capacitor تلقائياً
+      - name: Prepare Capacitor & Dependencies
+        run: |
+          echo '{"name":"turkcepro-app","version":"1.0.0","private":true}' > package.json
+          npm install @capacitor/core@latest @capacitor/cli@latest @capacitor/android@latest
+          echo '{"appId":"com.turkcepro.app","appName":"TurkcePro","webDir":".","bundledWebRuntime":false}' > capacitor.config.json
+
+      # 5. إضافة منصة الأندرويد
+      - name: Add Android Platform
+        run: |
+          npx cap add android
+
+      # 6. بناء ملف الـ APK باستخدام Gradle
+      - name: Build APK with Gradle
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      # 7. رفع ملف الـ APK الجاهز للتحميل
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: TurkcePro-APK
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+
