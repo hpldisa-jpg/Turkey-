@@ -1,0 +1,6 @@
+{
+  "appId": "com.turkcepro.app",
+  "appName": "TürkçePro",
+  "webDir": ".",
+  "bundledWebRuntime": false
+}
